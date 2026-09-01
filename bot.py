@@ -336,8 +336,63 @@ def format_caption(item: dict, zh_summary: str | None) -> str:
     return caption[:1020]
 
 
+def download_image(url: str) -> tuple[bytes, str] | None:
+    try:
+        resp = requests.get(url, headers=HTTP_HEADERS, timeout=20, allow_redirects=True)
+        if resp.status_code >= 400 or not resp.content:
+            return None
+        # Telegram 单图建议 < 10MB
+        if len(resp.content) > 9_500_000:
+            return None
+        ctype = (resp.headers.get("content-type") or "").lower()
+        if "png" in ctype or url.lower().endswith(".png"):
+            name = "cover.png"
+        elif "webp" in ctype or url.lower().endswith(".webp"):
+            name = "cover.webp"
+        elif "gif" in ctype or url.lower().endswith(".gif"):
+            name = "cover.gif"
+        else:
+            name = "cover.jpg"
+        if ctype and not ctype.startswith("image/"):
+            # 有些 CDN 不给正确 content-type，仍尝试按扩展名发
+            if not any(url.lower().endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp", ".gif")):
+                # 看文件头
+                head = resp.content[:16]
+                if head.startswith(b"\x89PNG"):
+                    name = "cover.png"
+                elif head.startswith(b"\xff\xd8"):
+                    name = "cover.jpg"
+                elif head[:4] == b"RIFF" and b"WEBP" in head[:16]:
+                    name = "cover.webp"
+                else:
+                    return None
+        return resp.content, name
+    except Exception as exc:  # noqa: BLE001
+        print(f"[warn] 下载图片失败: {exc}")
+        return None
+
+
 def send_telegram_photo(token: str, chat_id: str, photo_url: str, caption: str) -> bool:
     api = f"https://api.telegram.org/bot{token}/sendPhoto"
+    # 先下载再上传，避免 Telegram 无法访问国内 CDN
+    downloaded = download_image(photo_url)
+    if downloaded:
+        content, filename = downloaded
+        resp = requests.post(
+            api,
+            data={
+                "chat_id": chat_id,
+                "caption": caption,
+                "parse_mode": "HTML",
+            },
+            files={"photo": (filename, content)},
+            timeout=60,
+        )
+        if resp.status_code == 200:
+            return True
+        print(f"[warn] sendPhoto(upload) 失败: {resp.status_code} {resp.text[:240]}")
+
+    # 回退：直接让 Telegram 拉 URL（对 GitHub/外网图有时可用）
     resp = requests.post(
         api,
         data={
@@ -350,7 +405,7 @@ def send_telegram_photo(token: str, chat_id: str, photo_url: str, caption: str) 
     )
     if resp.status_code == 200:
         return True
-    print(f"[warn] sendPhoto 失败: {resp.status_code} {resp.text[:240]}")
+    print(f"[warn] sendPhoto(url) 失败: {resp.status_code} {resp.text[:240]}")
     return False
 
 
