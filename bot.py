@@ -316,7 +316,7 @@ def summarize_zh(title: str, summary: str, category: str) -> str | None:
 
 
 def format_caption(item: dict, zh_summary: str | None) -> str:
-    """标题可点进原文，但不显示「阅读原文」字样。"""
+    """标题可点进原文；来源放最后一行。"""
     title = html.escape(item["title"])
     source = html.escape(item["source"])
     link = item["link"]
@@ -328,11 +328,11 @@ def format_caption(item: dict, zh_summary: str | None) -> str:
             body = html.escape(raw)
 
     title_html = f'<a href="{html.escape(link, quote=True)}"><b>{title}</b></a>'
-    parts = [f"{cat} · {title_html}", f"来源: {source}"]
+    parts = [f"{cat} · {title_html}"]
     if body:
         parts.append(body)
+    parts.append(f"来源: {source}")
     caption = "\n".join(parts)
-    # Telegram caption 上限 1024
     return caption[:1020]
 
 

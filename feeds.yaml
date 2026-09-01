@@ -1,102 +1,433 @@
-# 资讯源（可自行增删）
+# 已实测可解析 RSS（约 143 个）
 # category: ai | game | finance | github
-# 坏掉的源会被自动跳过
 
 feeds:
-  # —— GitHub 开源推荐 ——
-  - name: GitHub Trending
+  - name: GH JS
+    category: github
+    url: https://raw.githubusercontent.com/tkc/github-trend-rss/main/rss/javascript-daily.xml
+  - name: GH Trending
     category: github
     url: https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml
-  - name: GitHub Trending Python
+  - name: mshibanami java
+    category: github
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/java.xml
+  - name: mshibanami rust
+    category: github
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/rust.xml
+  - name: mshibanami shell
+    category: github
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/shell.xml
+  - name: mshibanami swift
+    category: github
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/swift.xml
+  - name: mshibanami ts
+    category: github
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/typescript.xml
+  - name: tkc go
+    category: github
+    url: https://raw.githubusercontent.com/tkc/github-trend-rss/main/rss/go-daily.xml
+  - name: tkc python
     category: github
     url: https://raw.githubusercontent.com/tkc/github-trend-rss/main/rss/python-daily.xml
-  - name: GitHub AI Ranking
+  - name: tkc rust
     category: github
-    url: https://raw.githubusercontent.com/cnzhujie/ai-rss-feed/main/rss/github_ranking_ai_rss.xml
-
-  # —— AI / 科技 ——
-  - name: 量子位
-    category: ai
-    url: https://www.qbitai.com/feed
-  - name: 雷峰网
-    category: ai
-    url: https://www.leiphone.com/feed
+    url: https://raw.githubusercontent.com/tkc/github-trend-rss/main/rss/rust-daily.xml
+  - name: tkc ts
+    category: github
+    url: https://raw.githubusercontent.com/tkc/github-trend-rss/main/rss/typescript-daily.xml
   - name: 36氪
     category: ai
     url: https://www.36kr.com/feed
-  - name: 钛媒体
+  - name: 9to5Google
     category: ai
-    url: https://www.tmtpost.com/feed
-  - name: InfoQ 中文
+    url: https://9to5google.com/feed/
+  - name: 9to5Mac
+    category: ai
+    url: https://9to5mac.com/feed/
+  - name: A List Apart
+    category: ai
+    url: https://alistapart.com/main/feed/
+  - name: AWS ML
+    category: ai
+    url: https://aws.amazon.com/blogs/machine-learning/feed/
+  - name: Android Authority
+    category: ai
+    url: https://www.androidauthority.com/feed/
+  - name: Appinn
+    category: ai
+    url: https://www.appinn.com/feed/
+  - name: Ars Main
+    category: ai
+    url: https://feeds.arstechnica.com/arstechnica/index
+  - name: Ars Technica
+    category: ai
+    url: https://feeds.arstechnica.com/arstechnica/technology-lab
+  - name: Boing Boing
+    category: ai
+    url: https://boingboing.net/feed
+  - name: CNET
+    category: ai
+    url: https://www.cnet.com/rss/news/
+  - name: CSS Tricks
+    category: ai
+    url: https://css-tricks.com/feed/
+  - name: Cloudflare Blog
+    category: ai
+    url: https://blog.cloudflare.com/rss/
+  - name: DeepMind
+    category: ai
+    url: https://deepmind.google/blog/rss.xml
+  - name: Dev.to
+    category: ai
+    url: https://dev.to/feed
+  - name: DigitalOcean
+    category: ai
+    url: https://www.digitalocean.com/blog/rss
+  - name: Distill
+    category: ai
+    url: https://distill.pub/rss.xml
+  - name: Dropbox Tech
+    category: ai
+    url: https://dropbox.tech/feed
+  - name: Engadget
+    category: ai
+    url: https://www.engadget.com/rss.xml
+  - name: Fast Company
+    category: ai
+    url: https://www.fastcompany.com/latest/rss
+  - name: GitHub Blog
+    category: ai
+    url: https://github.blog/feed/
+  - name: Go Blog
+    category: ai
+    url: https://go.dev/blog/feed.atom
+  - name: Google AI
+    category: ai
+    url: https://blog.google/technology/ai/rss/
+  - name: HN
+    category: ai
+    url: https://hnrss.org/frontpage
+  - name: HN AI
+    category: ai
+    url: https://hnrss.org/newest?q=AI+OR+LLM+OR+GPT
+  - name: HashiCorp
+    category: ai
+    url: https://www.hashicorp.com/blog/feed.xml
+  - name: Heroku
+    category: ai
+    url: https://blog.heroku.com/feed
+  - name: IEEE Spectrum
+    category: ai
+    url: https://spectrum.ieee.org/feeds/feed.rss
+  - name: IT之家
+    category: ai
+    url: https://www.ithome.com/rss/
+  - name: Import AI
+    category: ai
+    url: https://jack-clark.net/feed/
+  - name: InfoQ EN
+    category: ai
+    url: https://feed.infoq.com/
+  - name: InfoQ中文
     category: ai
     url: https://www.infoq.cn/feed
+  - name: JetBrains Blog
+    category: ai
+    url: https://blog.jetbrains.com/feed/
+  - name: KDnuggets
+    category: ai
+    url: https://www.kdnuggets.com/feed
+  - name: Kernel
+    category: ai
+    url: https://www.kernel.org/feeds/kdist.xml
+  - name: Kotlin Blog
+    category: ai
+    url: https://blog.jetbrains.com/kotlin/feed/
+  - name: Kubernetes Blog
+    category: ai
+    url: https://kubernetes.io/feed.xml
+  - name: LWN
+    category: ai
+    url: https://lwn.net/headlines/rss
+  - name: Lilian Weng
+    category: ai
+    url: https://lilianweng.github.io/index.xml
+  - name: Lobsters
+    category: ai
+    url: https://lobste.rs/rss
+  - name: MIT News
+    category: ai
+    url: https://news.mit.edu/rss/topic/artificial-intelligence2
+  - name: MIT TR AI
+    category: ai
+    url: https://www.technologyreview.com/topic/artificial-intelligence/feed
+  - name: MS Research
+    category: ai
+    url: https://www.microsoft.com/en-us/research/feed/
+  - name: MacRumors
+    category: ai
+    url: https://feeds.macrumors.com/MacRumors-All
+  - name: Mozilla Hacks
+    category: ai
+    url: https://hacks.mozilla.org/feed/
+  - name: NVIDIA
+    category: ai
+    url: https://blogs.nvidia.com/feed/
+  - name: Nature ML
+    category: ai
+    url: https://www.nature.com/subjects/machine-learning.rss
+  - name: Netflix Tech
+    category: ai
+    url: https://netflixtechblog.com/feed
+  - name: Next.js Blog
+    category: ai
+    url: https://nextjs.org/feed.xml
+  - name: Node.js Blog
+    category: ai
+    url: https://nodejs.org/en/feed/blog.xml
+  - name: OSCHINA
+    category: ai
+    url: https://www.oschina.net/news/rss
+  - name: OpenAI
+    category: ai
+    url: https://openai.com/blog/rss.xml
+  - name: OpenML?
+    category: ai
+    url: https://blog.eleuther.ai/index.xml
+  - name: Pandaily
+    category: ai
+    url: https://pandaily.com/feed/
+  - name: Phoronix
+    category: ai
+    url: https://www.phoronix.com/rss.php
+  - name: Product Hunt
+    category: ai
+    url: https://www.producthunt.com/feed
+  - name: Python Insider
+    category: ai
+    url: https://blog.python.org/feeds/posts/default?alt=rss
+  - name: React Blog
+    category: ai
+    url: https://react.dev/rss.xml
+  - name: SD Times
+    category: ai
+    url: https://sdtimes.com/feed/
+  - name: SMBC?
+    category: ai
+    url: https://blog.samaltman.com/posts.atom
+  - name: ScienceDaily AI
+    category: ai
+    url: https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml
+  - name: Simon Willison
+    category: ai
+    url: https://simonwillison.net/atom/everything/
+  - name: Slashdot
+    category: ai
+    url: https://rss.slashdot.org/Slashdot/slashdotMain
+  - name: Smashing Mag
+    category: ai
+    url: https://www.smashingmagazine.com/feed/
+  - name: Solidot
+    category: ai
+    url: https://www.solidot.org/index.rss
+  - name: Spotify Eng
+    category: ai
+    url: https://engineering.atspotify.com/feed/
+  - name: Stack Overflow Blog
+    category: ai
+    url: https://stackoverflow.blog/feed/
+  - name: Stripe Blog
+    category: ai
+    url: https://stripe.com/blog/feed.rss
+  - name: TechCrunch
+    category: ai
+    url: https://techcrunch.com/feed/
+  - name: TechCrunch AI
+    category: ai
+    url: https://techcrunch.com/category/artificial-intelligence/feed/
+  - name: Techmeme
+    category: ai
+    url: https://www.techmeme.com/feed.xml
+  - name: Technasia
+    category: ai
+    url: https://www.techinasia.com/feed
+  - name: Technode
+    category: ai
+    url: https://technode.com/feed/
+  - name: The Verge
+    category: ai
+    url: https://www.theverge.com/rss/index.xml
+  - name: Thenewstack
+    category: ai
+    url: https://thenewstack.io/feed/
+  - name: "Tom's Hardware"
+    category: ai
+    url: https://www.tomshardware.com/feeds/all
+  - name: Towards AI
+    category: ai
+    url: https://pub.towardsai.net/feed
+  - name: VB AI
+    category: ai
+    url: https://venturebeat.com/category/ai/feed/
+  - name: VentureBeat
+    category: ai
+    url: https://venturebeat.com/feed/
+  - name: Vercel
+    category: ai
+    url: https://vercel.com/atom
+  - name: Verge AI
+    category: ai
+    url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+  - name: Vue Blog
+    category: ai
+    url: https://blog.vuejs.org/feed.rss
+  - name: Wired
+    category: ai
+    url: https://www.wired.com/feed/rss
+  - name: Wired AI
+    category: ai
+    url: https://www.wired.com/feed/tag/ai/latest/rss
+  - name: ZDNet
+    category: ai
+    url: https://www.zdnet.com/news/rss.xml
+  - name: arXiv cs.AI
+    category: ai
+    url: https://rss.arxiv.org/rss/cs.AI
+  - name: arXiv cs.CL
+    category: ai
+    url: https://rss.arxiv.org/rss/cs.CL
+  - name: arXiv cs.LG
+    category: ai
+    url: https://rss.arxiv.org/rss/cs.LG
+  - name: e27
+    category: ai
+    url: https://e27.co/feed/
+  - name: 少数派
+    category: ai
+    url: https://sspai.com/feed
+  - name: 掘金沸点?
+    category: ai
+    url: https://juejin.cn/rss
   - name: 极客公园
     category: ai
     url: https://www.geekpark.net/rss
   - name: 爱范儿
     category: ai
     url: https://www.ifanr.com/feed
-  - name: Solidot
+  - name: 科技爱好者周刊
     category: ai
-    url: https://www.solidot.org/index.rss
-  - name: OpenAI Blog
+    url: https://www.ruanyifeng.com/blog/atom.xml
+  - name: 量子位
     category: ai
-    url: https://openai.com/blog/rss.xml
-  - name: Google AI Blog
+    url: https://www.qbitai.com/feed
+  - name: 钛媒体
     category: ai
-    url: https://blog.google/technology/ai/rss/
-  - name: TechCrunch AI
+    url: https://www.tmtpost.com/feed
+  - name: 雷峰网
     category: ai
-    url: https://techcrunch.com/category/artificial-intelligence/feed/
-  - name: VentureBeat AI
-    category: ai
-    url: https://venturebeat.com/category/ai/feed/
-  - name: The Verge AI
-    category: ai
-    url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
-  - name: NVIDIA Blog
-    category: ai
-    url: https://blogs.nvidia.com/feed/
-  - name: Hacker News (frontpage)
-    category: ai
-    url: https://hnrss.org/frontpage
-
-  # —— 游戏 ——
-  - name: 机核
+    url: https://www.leiphone.com/feed
+  - name: Eurogamer
     category: game
-    url: https://www.gcores.com/rss
-  - name: 触乐
+    url: https://www.eurogamer.net/?format=rss
+  - name: Game Informer
     category: game
-    url: https://www.chuapp.com/feed
-  - name: 游戏陀螺
-    category: game
-    url: https://www.youxituoluo.com/feed
-  - name: Steam 新闻
-    category: game
-    url: https://store.steampowered.com/feeds/news.xml
+    url: https://gameinformer.com/rss.xml
   - name: GameSpot
     category: game
     url: https://www.gamespot.com/feeds/news/
+  - name: GameSpot Reviews
+    category: game
+    url: https://www.gamespot.com/feeds/reviews/
+  - name: Gematsu
+    category: game
+    url: https://www.gematsu.com/feed
+  - name: Godot
+    category: game
+    url: https://godotengine.org/rss.xml
+  - name: Nintendo Life
+    category: game
+    url: https://www.nintendolife.com/feeds/latest
   - name: PC Gamer
     category: game
     url: https://www.pcgamer.com/rss/
-  - name: Rock Paper Shotgun
+  - name: PlayStation Blog
+    category: game
+    url: https://blog.playstation.com/feed/
+  - name: Pure Xbox
+    category: game
+    url: https://www.purexbox.com/feeds/latest
+  - name: Push Square
+    category: game
+    url: https://www.pushsquare.com/feeds/latest
+  - name: RPS
     category: game
     url: https://www.rockpapershotgun.com/feed
-
-  # —— 金融 ——
+  - name: Steam
+    category: game
+    url: https://store.steampowered.com/feeds/news.xml
+  - name: Unity Blog
+    category: game
+    url: https://blog.unity.com/feed
+  - name: VG247
+    category: game
+    url: https://www.vg247.com/feed/news
+  - name: Xbox Wire
+    category: game
+    url: https://news.xbox.com/en-us/feed/
+  - name: 机核
+    category: game
+    url: https://www.gcores.com/rss
+  - name: 游戏陀螺
+    category: game
+    url: https://www.youxituoluo.com/feed
+  - name: 触乐
+    category: game
+    url: https://www.chuapp.com/feed
   - name: 36氪快讯
     category: finance
     url: https://www.36kr.com/feed-newsflash
-  - name: 雪球热帖
+  - name: Benzinga
     category: finance
-    url: https://xueqiu.com/hots/topic/rss
-  - name: Investing 中文
-    category: finance
-    url: https://cn.investing.com/rss/news.rss
+    url: https://www.benzinga.com/feed
   - name: CNBC
     category: finance
     url: https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114
+  - name: CNBC World
+    category: finance
+    url: https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100727362
+  - name: CoinTelegraph
+    category: finance
+    url: https://cointelegraph.com/rss
+  - name: Decrypt
+    category: finance
+    url: https://decrypt.co/feed
+  - name: Federal Reserve
+    category: finance
+    url: https://www.federalreserve.gov/feeds/press_all.xml
+  - name: Investing
+    category: finance
+    url: https://cn.investing.com/rss/news.rss
   - name: MarketWatch
     category: finance
     url: https://feeds.marketwatch.com/marketwatch/topstories/
+  - name: MarketWatch Markets
+    category: finance
+    url: https://feeds.marketwatch.com/marketwatch/marketpulse/
+  - name: McKinsey
+    category: finance
+    url: https://www.mckinsey.com/insights/rss
+  - name: Motley Fool
+    category: finance
+    url: https://www.fool.com/feeds/index.aspx?id=foolwatch&format=rss2
+  - name: NPR Business
+    category: finance
+    url: https://feeds.npr.org/1006/rss.xml
+  - name: The Block
+    category: finance
+    url: https://www.theblock.co/rss.xml
+  - name: WSJ Markets
+    category: finance
+    url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+  - name: 雪球
+    category: finance
+    url: https://xueqiu.com/hots/topic/rss
