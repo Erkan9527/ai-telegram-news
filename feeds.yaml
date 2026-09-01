@@ -1,49 +1,102 @@
 # 资讯源（可自行增删）
+# category: ai | game | finance | github
 # 坏掉的源会被自动跳过
 
 feeds:
-  # —— GitHub 开源推荐（Trending / AI 榜）——
+  # —— GitHub 开源推荐 ——
   - name: GitHub Trending
+    category: github
     url: https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml
   - name: GitHub Trending Python
+    category: github
     url: https://raw.githubusercontent.com/tkc/github-trend-rss/main/rss/python-daily.xml
   - name: GitHub AI Ranking
+    category: github
     url: https://raw.githubusercontent.com/cnzhujie/ai-rss-feed/main/rss/github_ranking_ai_rss.xml
 
-  # —— 中文 ——
+  # —— AI / 科技 ——
   - name: 量子位
+    category: ai
     url: https://www.qbitai.com/feed
   - name: 雷峰网
+    category: ai
     url: https://www.leiphone.com/feed
   - name: 36氪
+    category: ai
     url: https://www.36kr.com/feed
   - name: 钛媒体
+    category: ai
     url: https://www.tmtpost.com/feed
   - name: InfoQ 中文
+    category: ai
     url: https://www.infoq.cn/feed
   - name: 极客公园
+    category: ai
     url: https://www.geekpark.net/rss
   - name: 爱范儿
+    category: ai
     url: https://www.ifanr.com/feed
   - name: Solidot
+    category: ai
     url: https://www.solidot.org/index.rss
-
-  # —— 英文 ——
   - name: OpenAI Blog
+    category: ai
     url: https://openai.com/blog/rss.xml
   - name: Google AI Blog
+    category: ai
     url: https://blog.google/technology/ai/rss/
   - name: TechCrunch AI
+    category: ai
     url: https://techcrunch.com/category/artificial-intelligence/feed/
   - name: VentureBeat AI
+    category: ai
     url: https://venturebeat.com/category/ai/feed/
   - name: The Verge AI
+    category: ai
     url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
-  - name: MIT Tech Review AI
-    url: https://www.technologyreview.com/topic/artificial-intelligence/feed
   - name: NVIDIA Blog
+    category: ai
     url: https://blogs.nvidia.com/feed/
-  - name: Microsoft Research
-    url: https://www.microsoft.com/en-us/research/feed/
   - name: Hacker News (frontpage)
+    category: ai
     url: https://hnrss.org/frontpage
+
+  # —— 游戏 ——
+  - name: 机核
+    category: game
+    url: https://www.gcores.com/rss
+  - name: 触乐
+    category: game
+    url: https://www.chuapp.com/feed
+  - name: 游戏陀螺
+    category: game
+    url: https://www.youxituoluo.com/feed
+  - name: Steam 新闻
+    category: game
+    url: https://store.steampowered.com/feeds/news.xml
+  - name: GameSpot
+    category: game
+    url: https://www.gamespot.com/feeds/news/
+  - name: PC Gamer
+    category: game
+    url: https://www.pcgamer.com/rss/
+  - name: Rock Paper Shotgun
+    category: game
+    url: https://www.rockpapershotgun.com/feed
+
+  # —— 金融 ——
+  - name: 36氪快讯
+    category: finance
+    url: https://www.36kr.com/feed-newsflash
+  - name: 雪球热帖
+    category: finance
+    url: https://xueqiu.com/hots/topic/rss
+  - name: Investing 中文
+    category: finance
+    url: https://cn.investing.com/rss/news.rss
+  - name: CNBC
+    category: finance
+    url: https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114
+  - name: MarketWatch
+    category: finance
+    url: https://feeds.marketwatch.com/marketwatch/topstories/

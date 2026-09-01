@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""AI 资讯 → Telegram。适合本地试跑 + GitHub Actions 定时。"""
+"""资讯 → Telegram（带图、无「阅读原文」）。适合本地试跑 + GitHub Actions。"""
 
 from __future__ import annotations
 
 import html
 import json
 import os
+import re
 import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from urllib.parse import urljoin, urlparse
 
 import feedparser
 import requests
@@ -17,6 +19,17 @@ import yaml
 ROOT = Path(__file__).resolve().parent
 SEEN_PATH = ROOT / "data" / "seen.json"
 FEEDS_PATH = ROOT / "feeds.yaml"
+HTTP_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; ai-telegram-news/1.1; +https://github.com)",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+}
+
+CATEGORY_LABEL = {
+    "ai": "科技",
+    "game": "游戏",
+    "finance": "金融",
+    "github": "开源",
+}
 
 AI_KEYWORDS = (
     "ai",
@@ -41,21 +54,19 @@ AI_KEYWORDS = (
     "具身智能",
     "多模态",
     "chatgpt",
-    "AIGC",
+    "aigc",
     "算力",
     "英伟达",
     "nvidia",
 )
 
-# 这些源默认视为 AI/科技相关，不做关键词过滤
-ALWAYS_AI_FEED_MARKERS = (
+ALWAYS_PASS_NAME = (
     "openai",
     "google ai",
     "techcrunch ai",
     "venturebeat",
     "verge ai",
     "nvidia",
-    "mit tech",
     "量子位",
     "雷峰网",
     "infoq",
@@ -94,10 +105,13 @@ def load_seen() -> set[str]:
 
 def save_seen(urls: set[str]) -> None:
     SEEN_PATH.parent.mkdir(parents=True, exist_ok=True)
-    # 只保留最近 3000 条，避免文件无限长大
     trimmed = list(urls)[-3000:]
     SEEN_PATH.write_text(
-        json.dumps({"urls": trimmed, "updated_at": datetime.now(timezone.utc).isoformat()}, ensure_ascii=False, indent=2),
+        json.dumps(
+            {"urls": trimmed, "updated_at": datetime.now(timezone.utc).isoformat()},
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
 
@@ -114,20 +128,98 @@ def entry_time(entry) -> datetime | None:
 
 
 def strip_html(text: str) -> str:
-    # 极简去标签，够用在 RSS summary 上
-    import re
-
     text = re.sub(r"<[^>]+>", " ", text or "")
     return " ".join(text.split())
 
 
-def is_ai_related(title: str, summary: str, feed_name: str) -> bool:
-    # 明确 AI 源默认放行；Trending/36氪/HN 等综合源做关键词过滤
+def should_keep(title: str, summary: str, feed_name: str, category: str) -> bool:
+    if category in ("game", "finance", "github"):
+        if category == "github":
+            # trending 全站仍用 AI 关键词；AI Ranking 放行
+            if "ai ranking" in feed_name.lower():
+                return True
+            text = f"{title} {strip_html(summary)}".lower()
+            return any(k.lower() in text for k in AI_KEYWORDS)
+        return True
     name_l = feed_name.lower()
-    if any(x in name_l for x in ALWAYS_AI_FEED_MARKERS):
+    if any(x in name_l for x in ALWAYS_PASS_NAME):
         return True
     text = f"{title} {strip_html(summary)}".lower()
     return any(k.lower() in text for k in AI_KEYWORDS)
+
+
+def _looks_like_image_url(url: str) -> bool:
+    if not url or not url.startswith(("http://", "https://")):
+        return False
+    path = urlparse(url).path.lower()
+    if any(x in path for x in (".svg", "sprite", "logo", "icon", "avatar", "1x1", "pixel")):
+        return False
+    if any(path.endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp", ".gif")):
+        return True
+    # CDN 常无扩展名
+    return "image" in url.lower() or "img" in url.lower() or "photo" in url.lower() or "media" in url.lower()
+
+
+def extract_image_from_entry(entry, page_url: str) -> str | None:
+    candidates: list[str] = []
+
+    for key in ("media_content", "media_thumbnail"):
+        for media in entry.get(key) or []:
+            url = (media.get("url") or "").strip()
+            if url:
+                candidates.append(url)
+
+    for enc in entry.get("enclosures") or []:
+        href = (enc.get("href") or enc.get("url") or "").strip()
+        typ = (enc.get("type") or "").lower()
+        if href and (typ.startswith("image") or _looks_like_image_url(href)):
+            candidates.append(href)
+
+    html_blob = " ".join(
+        str(entry.get(k) or "")
+        for k in ("summary", "description", "content")
+    )
+    if isinstance(entry.get("content"), list):
+        html_blob += " " + " ".join(c.get("value", "") for c in entry["content"])
+
+    for match in re.finditer(r'<img[^>]+src=["\']([^"\']+)["\']', html_blob, flags=re.I):
+        candidates.append(urljoin(page_url, match.group(1)))
+
+    for url in candidates:
+        abs_url = urljoin(page_url, url)
+        if _looks_like_image_url(abs_url):
+            return abs_url
+    return None
+
+
+def fetch_og_image(page_url: str) -> str | None:
+    try:
+        resp = requests.get(page_url, headers=HTTP_HEADERS, timeout=12, allow_redirects=True)
+        if resp.status_code >= 400 or not resp.text:
+            return None
+        text = resp.text[:200_000]
+        patterns = [
+            r'<meta[^>]+property=["\']og:image:secure_url["\'][^>]+content=["\']([^"\']+)["\']',
+            r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+            r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+            r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+        ]
+        for pat in patterns:
+            m = re.search(pat, text, flags=re.I)
+            if m:
+                url = urljoin(page_url, html.unescape(m.group(1).strip()))
+                if _looks_like_image_url(url) or url.startswith("http"):
+                    return url
+    except Exception as exc:  # noqa: BLE001
+        print(f"[warn] og:image 失败: {exc}")
+    return None
+
+
+def resolve_image(entry, page_url: str) -> str | None:
+    img = extract_image_from_entry(entry, page_url)
+    if img:
+        return img
+    return fetch_og_image(page_url)
 
 
 def fetch_entries(lookback_hours: int) -> list[dict]:
@@ -136,15 +228,15 @@ def fetch_entries(lookback_hours: int) -> list[dict]:
     feeds = config.get("feeds") or []
     cutoff = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
     items: list[dict] = []
-    headers = {"User-Agent": "ai-telegram-news/1.0 (+https://github.com; RSS reader)"}
 
     for feed in feeds:
         name = feed.get("name", "unknown")
         url = feed.get("url")
+        category = (feed.get("category") or "ai").lower()
         if not url:
             continue
         try:
-            resp = requests.get(url, headers=headers, timeout=15)
+            resp = requests.get(url, headers=HTTP_HEADERS, timeout=15)
             resp.raise_for_status()
             parsed = feedparser.parse(resp.content)
         except Exception as exc:  # noqa: BLE001
@@ -163,19 +255,22 @@ def fetch_entries(lookback_hours: int) -> list[dict]:
             if when and when < cutoff:
                 continue
             summary = entry.get("summary") or entry.get("description") or ""
-            if not is_ai_related(title, summary, name):
+            if not should_keep(title, summary, name, category):
                 continue
+            image = extract_image_from_entry(entry, link)
             items.append(
                 {
                     "title": title,
                     "link": link,
                     "source": name,
-                    "summary": summary[:500],
+                    "category": category,
+                    "summary": summary[:800],
+                    "image": image or "",
                     "when": when.isoformat() if when else "",
+                    "_entry": entry,
                 }
             )
 
-    # 新到旧；同链接去重
     items.sort(key=lambda x: x.get("when") or "", reverse=True)
     deduped: list[dict] = []
     seen_links: set[str] = set()
@@ -187,15 +282,15 @@ def fetch_entries(lookback_hours: int) -> list[dict]:
     return deduped
 
 
-def summarize_zh(title: str, summary: str) -> str | None:
-    """用 SiliconFlow 免费 4B 模型生成中文短摘要。"""
+def summarize_zh(title: str, summary: str, category: str) -> str | None:
     api_key = os.environ.get("OPENAI_API_KEY", "").strip() or os.environ.get("SILICONFLOW_API_KEY", "").strip()
     if not api_key:
         return None
     base = (os.environ.get("OPENAI_API_BASE") or "https://api.siliconflow.cn/v1").rstrip("/")
     model = os.environ.get("OPENAI_MODEL") or "Qwen/Qwen3.5-4B"
+    label = CATEGORY_LABEL.get(category, "资讯")
     prompt = (
-        "用一两句中文概括这条 AI 资讯，客观简短，不要标题党，不要 emoji。\n"
+        f"用一两句中文概括这条{label}资讯，客观简短，不要标题党，不要 emoji。\n"
         f"标题: {title}\n"
         f"摘要: {strip_html(summary)[:800]}"
     )
@@ -220,44 +315,73 @@ def summarize_zh(title: str, summary: str) -> str | None:
         return None
 
 
-def format_message(item: dict, zh_summary: str | None) -> str:
+def format_caption(item: dict, zh_summary: str | None) -> str:
+    """标题可点进原文，但不显示「阅读原文」字样。"""
     title = html.escape(item["title"])
     source = html.escape(item["source"])
     link = item["link"]
-    is_github = "github.com/" in link.lower() or "github" in item["source"].lower()
+    cat = CATEGORY_LABEL.get(item.get("category") or "", "资讯")
     body = html.escape(zh_summary) if zh_summary else ""
-    if not body and is_github:
-        raw = strip_html(item.get("summary") or "")[:180]
+    if not body and item.get("category") == "github":
+        raw = strip_html(item.get("summary") or "")[:160]
         if raw:
             body = html.escape(raw)
 
-    if is_github:
-        parts = [f"开源推荐 · <b>{title}</b>", f"来源: {source}"]
-        if body:
-            parts.append(body)
-        parts.append(f'<a href="{html.escape(link, quote=True)}">GitHub 仓库</a>')
-    else:
-        parts = [f"<b>{title}</b>", f"来源: {source}"]
-        if body:
-            parts.append(body)
-        parts.append(f'<a href="{html.escape(link, quote=True)}">阅读原文</a>')
-    return "\n".join(parts)
+    title_html = f'<a href="{html.escape(link, quote=True)}"><b>{title}</b></a>'
+    parts = [f"{cat} · {title_html}", f"来源: {source}"]
+    if body:
+        parts.append(body)
+    caption = "\n".join(parts)
+    # Telegram caption 上限 1024
+    return caption[:1020]
 
 
-def send_telegram(token: str, chat_id: str, text: str) -> None:
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
+def send_telegram_photo(token: str, chat_id: str, photo_url: str, caption: str) -> bool:
+    api = f"https://api.telegram.org/bot{token}/sendPhoto"
     resp = requests.post(
-        url,
+        api,
+        data={
+            "chat_id": chat_id,
+            "photo": photo_url,
+            "caption": caption,
+            "parse_mode": "HTML",
+        },
+        timeout=45,
+    )
+    if resp.status_code == 200:
+        return True
+    print(f"[warn] sendPhoto 失败: {resp.status_code} {resp.text[:240]}")
+    return False
+
+
+def send_telegram_text(token: str, chat_id: str, text: str) -> None:
+    api = f"https://api.telegram.org/bot{token}/sendMessage"
+    resp = requests.post(
+        api,
         json={
             "chat_id": chat_id,
             "text": text,
             "parse_mode": "HTML",
-            "disable_web_page_preview": False,
+            "disable_web_page_preview": True,
         },
         timeout=30,
     )
     if resp.status_code != 200:
         raise RuntimeError(f"Telegram 发送失败: {resp.status_code} {resp.text}")
+
+
+def post_item(token: str, chat_id: str, item: dict, zh: str | None) -> None:
+    caption = format_caption(item, zh)
+    image = item.get("image") or ""
+    if not image and item.get("_entry") is not None:
+        image = resolve_image(item["_entry"], item["link"]) or ""
+        item["image"] = image
+
+    if image:
+        ok = send_telegram_photo(token, chat_id, image, caption)
+        if ok:
+            return
+    send_telegram_text(token, chat_id, caption)
 
 
 def main() -> None:
@@ -266,6 +390,7 @@ def main() -> None:
     chat_id = require_env("TELEGRAM_CHAT_ID")
     max_posts = int(os.environ.get("MAX_POSTS_PER_RUN", "5"))
     lookback = int(os.environ.get("LOOKBACK_HOURS", "24"))
+    dry_run = os.environ.get("DRY_RUN", "").strip() in ("1", "true", "yes")
 
     seen = load_seen()
     entries = fetch_entries(lookback)
@@ -273,18 +398,43 @@ def main() -> None:
     print(f"抓到 {len(entries)} 条，其中新内容 {len(fresh)} 条")
     print(f"摘要模型: {os.environ.get('OPENAI_MODEL') or 'Qwen/Qwen3.5-4B'}")
 
-    posted = 0
-    for item in fresh[:max_posts]:
-        zh = summarize_zh(item["title"], item["summary"])
-        msg = format_message(item, zh)
-        send_telegram(token, chat_id, msg)
-        seen.add(item["link"])
-        posted += 1
-        print(f"[ok] {item['title'][:80]}")
-        time.sleep(1.2)  # 防 Telegram 限流
+    # 尽量让科技/游戏/金融轮流出几条
+    buckets = {"ai": [], "game": [], "finance": [], "github": []}
+    for e in fresh:
+        buckets.setdefault(e.get("category") or "ai", []).append(e)
+    ordered: list[dict] = []
+    while len(ordered) < max_posts and any(buckets.values()):
+        for key in ("ai", "game", "finance", "github"):
+            if buckets.get(key):
+                ordered.append(buckets[key].pop(0))
+            if len(ordered) >= max_posts:
+                break
 
-    save_seen(seen)
-    print(f"本次推送 {posted} 条")
+    posted = 0
+    for item in ordered:
+        # 发送前补 og:image（只对要发的几条做，省时间）
+        if not item.get("image"):
+            item["image"] = resolve_image(item.get("_entry"), item["link"]) or ""
+        zh = summarize_zh(item["title"], item["summary"], item.get("category") or "ai")
+        caption = format_caption(item, zh)
+        print(f"[prep] cat={item.get('category')} img={'Y' if item.get('image') else 'N'} {item['title'][:60]}")
+        print(f"       caption: {strip_html(caption)[:100]}")
+        if item.get("image"):
+            print(f"       image: {item['image'][:100]}")
+        if not dry_run:
+            post_item(token, chat_id, item, zh)
+            seen.add(item["link"])
+            posted += 1
+            print(f"[ok] posted")
+            time.sleep(1.2)
+        else:
+            posted += 1
+            print("[dry-run] skip send")
+
+    if not dry_run:
+        # 不要把 feedparser entry 写进 seen；seen 只存 url
+        save_seen(seen)
+    print(f"本次处理 {posted} 条")
 
 
 if __name__ == "__main__":
