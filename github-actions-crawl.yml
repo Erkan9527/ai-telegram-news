@@ -1,0 +1,47 @@
+name: AI News → Telegram
+
+on:
+  schedule:
+    # 每 2 小时跑一次（UTC）。想更密可改成 0 */1 * * *
+    - cron: "0 */2 * * *"
+  workflow_dispatch: # 允许在网页上手动点「Run workflow」
+
+permissions:
+  contents: write # 把 data/seen.json 写回仓库做去重
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run crawler
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          MAX_POSTS_PER_RUN: "5"
+          LOOKBACK_HOURS: "24"
+        run: python bot.py
+
+      - name: Commit seen state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/seen.json
+          if git diff --staged --quiet; then
+            echo "No seen.json changes"
+          else
+            git commit -m "chore: update seen.json"
+            git push
+          fi
