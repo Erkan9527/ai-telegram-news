@@ -3,14 +3,17 @@
 RSS 抓 AI 资讯 →（可选）Groq 中文摘要 → 推到 Telegram 频道。  
 **不需要买服务器**，公开仓库 + Actions 定时跑即可。密钥放 Secrets，不会公开。
 
+当前频道：`@rix_tech_share`（rix科技风向标-资源分享）  
+机器人：`@rix_new_admin_bot`（须为频道管理员，并开启 Post Messages）
+
 ---
 
 ## 你需要准备的东西（最少 2 个）
 
 | # | 东西 | 必填？ | 怎么拿 |
 |---|------|--------|--------|
-| 1 | `TELEGRAM_BOT_TOKEN` | 必填 | BotFather |
-| 2 | `TELEGRAM_CHAT_ID` | 必填 | 你的频道 @用户名 或数字 ID |
+| 1 | `TELEGRAM_BOT_TOKEN` | 必填 | BotFather；若曾发到聊天先 `/revoke` 换新 |
+| 2 | `TELEGRAM_CHAT_ID` | 必填 | 已定为 `@rix_tech_share` |
 | 3 | `GROQ_API_KEY` | 可选 | console.groq.com，没有就只推标题+链接 |
 | 4 | GitHub 账号 | 必填 | 用来建公开仓库、开 Actions |
 
