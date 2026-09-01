@@ -73,6 +73,109 @@ ALWAYS_PASS_NAME = (
     "github ai ranking",
 )
 
+# 命中越多越优先推送（防重大新闻被 5 条上限挤掉）
+HOT_KEYWORDS = (
+    "重磅",
+    "突发",
+    "紧急",
+    "首发",
+    "发布",
+    "官宣",
+    "突破",
+    "里程碑",
+    "暴涨",
+    "暴跌",
+    "涨停",
+    "跌停",
+    "收购",
+    "并购",
+    "融资",
+    "上市",
+    "裁员",
+    "gpt",
+    "openai",
+    "anthropic",
+    "claude",
+    "gemini",
+    "deepseek",
+    "英伟达",
+    "nvidia",
+    "breakthrough",
+    "launch",
+    "release",
+    "breaking",
+    "exclusive",
+)
+
+TIER1_SOURCES = (
+    "openai",
+    "量子位",
+    "techcrunch",
+    "36氪快讯",
+    "cnbc",
+    "reuters",
+    "bloomberg",
+    "the verge",
+    "google ai",
+)
+
+
+def score_item(item: dict) -> int:
+    text = f"{item['title']} {strip_html(item.get('summary') or '')}".lower()
+    score = 0
+    for kw in HOT_KEYWORDS:
+        if kw.lower() in text:
+            score += 2
+    src = item.get("source", "").lower()
+    if any(x in src for x in TIER1_SOURCES):
+        score += 2
+    if item.get("image"):
+        score += 1
+    return score
+
+
+def pick_items(fresh: list[dict], max_posts: int) -> list[dict]:
+    """热点优先 + 分类轮播，避免只推冷门。"""
+    for item in fresh:
+        item["_score"] = score_item(item)
+
+    buckets: dict[str, list[dict]] = {"ai": [], "game": [], "finance": [], "github": []}
+    for item in fresh:
+        buckets.setdefault(item.get("category") or "ai", []).append(item)
+    for items in buckets.values():
+        items.sort(key=lambda x: (-x["_score"], x.get("when") or ""), reverse=False)
+
+    ordered: list[dict] = []
+    seen_links: set[str] = set()
+
+    # 1) 高分热点（>=6）先占坑，最多一半配额
+    hot_cap = max(2, max_posts // 2)
+    hot_pool = sorted(fresh, key=lambda x: (-x["_score"], x.get("when") or ""), reverse=False)
+    for item in hot_pool:
+        if item["_score"] < 6 or len(ordered) >= hot_cap:
+            break
+        if item["link"] in seen_links:
+            continue
+        ordered.append(item)
+        seen_links.add(item["link"])
+
+    # 2) 各分类轮播补齐
+    while len(ordered) < max_posts and any(buckets.values()):
+        for key in ("ai", "game", "finance", "github"):
+            while buckets.get(key):
+                item = buckets[key].pop(0)
+                if item["link"] in seen_links:
+                    continue
+                ordered.append(item)
+                seen_links.add(item["link"])
+                break
+            if len(ordered) >= max_posts:
+                break
+
+    for item in ordered:
+        item.pop("_score", None)
+    return ordered
+
 
 def load_env_file() -> None:
     env_path = ROOT / ".env"
@@ -453,17 +556,11 @@ def main() -> None:
     print(f"抓到 {len(entries)} 条，其中新内容 {len(fresh)} 条")
     print(f"摘要模型: {os.environ.get('OPENAI_MODEL') or 'Qwen/Qwen3.5-4B'}")
 
-    # 尽量让科技/游戏/金融轮流出几条
-    buckets = {"ai": [], "game": [], "finance": [], "github": []}
-    for e in fresh:
-        buckets.setdefault(e.get("category") or "ai", []).append(e)
-    ordered: list[dict] = []
-    while len(ordered) < max_posts and any(buckets.values()):
-        for key in ("ai", "game", "finance", "github"):
-            if buckets.get(key):
-                ordered.append(buckets[key].pop(0))
-            if len(ordered) >= max_posts:
-                break
+    # 热点优先 + 分类轮播
+    ordered = pick_items(fresh, max_posts)
+    if ordered:
+        hot = [x for x in ordered if score_item(x) >= 6]
+        print(f"本轮推送 {len(ordered)} 条，其中热点优先 {len(hot)} 条")
 
     posted = 0
     for item in ordered:
