@@ -187,31 +187,36 @@ def fetch_entries(lookback_hours: int) -> list[dict]:
     return deduped
 
 
-def summarize_zh(title: str, summary: str, groq_key: str) -> str | None:
-    if not groq_key:
+def summarize_zh(title: str, summary: str) -> str | None:
+    """用 SiliconFlow 免费 4B 模型生成中文短摘要。"""
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip() or os.environ.get("SILICONFLOW_API_KEY", "").strip()
+    if not api_key:
         return None
+    base = (os.environ.get("OPENAI_API_BASE") or "https://api.siliconflow.cn/v1").rstrip("/")
+    model = os.environ.get("OPENAI_MODEL") or "Qwen/Qwen3.5-4B"
     prompt = (
         "用一两句中文概括这条 AI 资讯，客观简短，不要标题党，不要 emoji。\n"
         f"标题: {title}\n"
-        f"摘要: {summary[:800]}"
+        f"摘要: {strip_html(summary)[:800]}"
     )
     try:
         resp = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+            f"{base}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
-                "model": "llama-3.1-8b-instant",
+                "model": model,
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.2,
+                "temperature": float(os.environ.get("OPENAI_TEMPERATURE", "0") or "0"),
                 "max_tokens": 120,
+                "enable_thinking": False,
             },
             timeout=30,
         )
         resp.raise_for_status()
-        text = resp.json()["choices"][0]["message"]["content"].strip()
+        text = (resp.json()["choices"][0]["message"].get("content") or "").strip()
         return text[:300] if text else None
     except Exception as exc:  # noqa: BLE001
-        print(f"[warn] Groq 摘要失败: {exc}")
+        print(f"[warn] 摘要失败 ({model}): {exc}")
         return None
 
 
@@ -259,7 +264,6 @@ def main() -> None:
     load_env_file()
     token = require_env("TELEGRAM_BOT_TOKEN")
     chat_id = require_env("TELEGRAM_CHAT_ID")
-    groq_key = os.environ.get("GROQ_API_KEY", "").strip()
     max_posts = int(os.environ.get("MAX_POSTS_PER_RUN", "5"))
     lookback = int(os.environ.get("LOOKBACK_HOURS", "24"))
 
@@ -267,10 +271,11 @@ def main() -> None:
     entries = fetch_entries(lookback)
     fresh = [e for e in entries if e["link"] not in seen]
     print(f"抓到 {len(entries)} 条，其中新内容 {len(fresh)} 条")
+    print(f"摘要模型: {os.environ.get('OPENAI_MODEL') or 'Qwen/Qwen3.5-4B'}")
 
     posted = 0
     for item in fresh[:max_posts]:
-        zh = summarize_zh(item["title"], item["summary"], groq_key)
+        zh = summarize_zh(item["title"], item["summary"])
         msg = format_message(item, zh)
         send_telegram(token, chat_id, msg)
         seen.add(item["link"])
