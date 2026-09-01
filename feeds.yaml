@@ -1,0 +1,49 @@
+# 资讯源（可自行增删）
+# 坏掉的源会被自动跳过
+
+feeds:
+  # —— GitHub 开源推荐（Trending / AI 榜）——
+  - name: GitHub Trending
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml
+  - name: GitHub Trending Python
+    url: https://raw.githubusercontent.com/tkc/github-trend-rss/main/rss/python-daily.xml
+  - name: GitHub AI Ranking
+    url: https://raw.githubusercontent.com/cnzhujie/ai-rss-feed/main/rss/github_ranking_ai_rss.xml
+
+  # —— 中文 ——
+  - name: 量子位
+    url: https://www.qbitai.com/feed
+  - name: 雷峰网
+    url: https://www.leiphone.com/feed
+  - name: 36氪
+    url: https://www.36kr.com/feed
+  - name: 钛媒体
+    url: https://www.tmtpost.com/feed
+  - name: InfoQ 中文
+    url: https://www.infoq.cn/feed
+  - name: 极客公园
+    url: https://www.geekpark.net/rss
+  - name: 爱范儿
+    url: https://www.ifanr.com/feed
+  - name: Solidot
+    url: https://www.solidot.org/index.rss
+
+  # —— 英文 ——
+  - name: OpenAI Blog
+    url: https://openai.com/blog/rss.xml
+  - name: Google AI Blog
+    url: https://blog.google/technology/ai/rss/
+  - name: TechCrunch AI
+    url: https://techcrunch.com/category/artificial-intelligence/feed/
+  - name: VentureBeat AI
+    url: https://venturebeat.com/category/ai/feed/
+  - name: The Verge AI
+    url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+  - name: MIT Tech Review AI
+    url: https://www.technologyreview.com/topic/artificial-intelligence/feed
+  - name: NVIDIA Blog
+    url: https://blogs.nvidia.com/feed/
+  - name: Microsoft Research
+    url: https://www.microsoft.com/en-us/research/feed/
+  - name: Hacker News (frontpage)
+    url: https://hnrss.org/frontpage
