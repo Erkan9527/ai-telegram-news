@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write # 把 data/seen.json 写回仓库做去重
 
+# 避免 10 分钟定时任务重叠，导致 seen.json 推送冲突
+concurrency:
+  group: ai-news-crawl
+  cancel-in-progress: false
+
 jobs:
   crawl:
     runs-on: ubuntu-latest
@@ -38,14 +43,17 @@ jobs:
         run: python bot.py
 
       - name: Commit seen state
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p data
+          test -f data/seen.json || echo '{"urls":[]}' > data/seen.json
           git add -f data/seen.json
           if git diff --staged --quiet; then
             echo "No seen.json changes"
-          else
-            git commit -m "chore: update seen.json"
-            git push
+            exit 0
           fi
+          git commit -m "chore: update seen.json"
+          git pull --rebase origin main
+          git push origin main
